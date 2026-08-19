@@ -24,7 +24,8 @@ export default function GlobalLoader({ fullScreen = true }: GlobalLoaderProps) {
         src={bgImage}
         alt="Background"
         fill
-        className="object-cover opacity-40 scale-105 animate-in zoom-in duration-[10000ms]"
+        style={{ animationDuration: '10s' }}
+        className="object-cover opacity-40 scale-105 animate-in zoom-in"
         priority
       />
       <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent"></div>

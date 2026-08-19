@@ -7,12 +7,17 @@ import "./globals.css"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NODE_ENV === "production" 
+      ? "https://niman-snack.vercel.app" 
+      : "http://localhost:3000"
+  ),
   title: "Niman Snacks Bar - Crispy Delights Made with Love",
   description: "Authentic, homemade snacks made with fresh ingredients. Try our famous samosas!",
   icons: {
     icon: "/favicon.ico",
   },
-    generator: 'v0.dev'
+  generator: 'v0.dev'
 }
 
 export default function RootLayout({
@@ -29,7 +34,3 @@ export default function RootLayout({
     </html>
   )
 }
-
-
-
-import './globals.css'
