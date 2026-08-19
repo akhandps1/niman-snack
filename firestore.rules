@@ -1,0 +1,21 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Hero Section: Anyone can read, only authenticated admin can write
+    match /hero_section/{document=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    // Food Items: Anyone can read, only authenticated admin can write
+    match /food_items/{document=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    // Default fallback
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
