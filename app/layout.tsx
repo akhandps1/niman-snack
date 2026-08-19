@@ -20,6 +20,8 @@ export const metadata: Metadata = {
   generator: 'v0.dev'
 }
 
+import { ScrollProgress } from "@/components/scroll-progress"
+
 export default function RootLayout({
   children,
 }: {
@@ -28,6 +30,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
+        <ScrollProgress />
         {children}
         <Toaster richColors position="top-right" />
       </body>
