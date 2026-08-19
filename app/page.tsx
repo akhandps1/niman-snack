@@ -42,7 +42,7 @@ export default function Home() {
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
 
   // Default hardcoded values as fallback
-  const defaultWhatsappNumber = "+918800218121";
+  const defaultWhatsappNumber = "+91 88002 18121";
   const defaultWhatsappMessage = "Hi! I'd like to place an order from Niman Snacks Bar.";
   const defaultHeroImage = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/03b4a790-cba5-4c1f-b3ee-15b711bbae1b%20%281%29.jpg-idkiDzKGfGh5KPHVNbe3S6F2GNpAjW.jpeg";
   
@@ -214,7 +214,7 @@ export default function Home() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button size="lg" className="bg-green-600 hover:bg-green-700 text-white text-lg px-8 py-6 rounded-full w-full sm:w-auto transition-transform hover:scale-105 shadow-lg" asChild>
-              <Link href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`} target="_blank">
+              <Link href={`https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(whatsappMessage)}`} target="_blank">
                 Order on WhatsApp
               </Link>
             </Button>
@@ -666,7 +666,7 @@ export default function Home() {
             <h3 className="text-lg font-bold text-white mb-6 uppercase tracking-wider text-sm">Contact Us</h3>
             <ul className="space-y-4">
               <li>
-                <a href={`https://wa.me/${whatsappNumber}`} target="_blank" className="flex items-center hover:text-green-400 transition-colors group">
+                <a href={`https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}`} target="_blank" className="flex items-center hover:text-green-400 transition-colors group">
                   <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center mr-3 group-hover:bg-green-900/50">
                     <Phone className="w-4 h-4 text-green-500" />
                   </div>

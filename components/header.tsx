@@ -57,7 +57,7 @@ export default function Header() {
             asChild
           >
             <Link
-              href="https://wa.me/1234567890?text=Hi!%20I'd%20like%20to%20order%20samosas%20from%20Niman%20Snacks%20Bar.%20Please%20share%20the%20details."
+              href="https://wa.me/918800218121?text=Hi!%20I'd%20like%20to%20order%20samosas%20from%20Niman%20Snacks%20Bar.%20Please%20share%20the%20details."
               target="_blank"
             >
               Order Now
@@ -89,7 +89,7 @@ export default function Header() {
                 asChild
               >
                 <Link
-                  href="https://wa.me/1234567890?text=Hi!%20I'd%20like%20to%20order%20samosas%20from%20Niman%20Snacks%20Bar.%20Please%20share%20the%20details."
+                  href="https://wa.me/918800218121?text=Hi!%20I'd%20like%20to%20order%20samosas%20from%20Niman%20Snacks%20Bar.%20Please%20share%20the%20details."
                   target="_blank"
                   onClick={() => setIsOpen(false)}
                 >

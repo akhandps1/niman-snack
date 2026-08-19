@@ -18,7 +18,7 @@ export default function WhatsAppButton({
   variant = "default",
   className,
 }: WhatsAppButtonProps) {
-  const whatsappUrl = `https://wa.me/${number}?text=${encodeURIComponent(message)}`
+  const whatsappUrl = `https://wa.me/${number.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(message)}`
 
   return (
     <Button asChild size={size} variant={variant} className={className || "bg-green-500 hover:bg-green-600 text-white"}>
