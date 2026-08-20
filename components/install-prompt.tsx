@@ -30,25 +30,22 @@ export function InstallPrompt() {
   const [hasDismissed, setHasDismissed] = useState(false);
 
   useEffect(() => {
-    // Check if dismissed previously
-    if (localStorage.getItem("pwaPromptDismissed") === "true") {
-      setHasDismissed(true);
-      return;
-    }
-
     // Check if already installed
     if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
       setIsStandalone(true);
       return;
     }
 
+    const wasDismissed = localStorage.getItem("pwaPromptDismissed") === "true";
+    setHasDismissed(wasDismissed);
+
     // Detect iOS
     const userAgent = window.navigator.userAgent.toLowerCase();
     const isIosDevice = /iphone|ipad|ipod/.test(userAgent);
     setIsIOS(isIosDevice);
 
-    // If iOS and not standalone, show our custom instruction after a short delay
-    if (isIosDevice && !isStandalone) {
+    // If iOS and not standalone, show our custom instruction after a short delay (if not dismissed)
+    if (isIosDevice && !isStandalone && !wasDismissed) {
       const timer = setTimeout(() => setShowPrompt(true), 3000);
       return () => clearTimeout(timer);
     }
@@ -57,14 +54,20 @@ export function InstallPrompt() {
     const handleBeforeInstallPrompt = (e: BeforeInstallPromptEvent) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      // Show prompt after a short delay
-      setTimeout(() => setShowPrompt(true), 2000);
+      // Auto-show prompt after a short delay (if not dismissed)
+      if (!wasDismissed) {
+        setTimeout(() => setShowPrompt(true), 2000);
+      }
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     
     // Allow external triggers (like a button click in the header)
-    const handleTrigger = () => setShowPrompt(true);
+    const handleTrigger = () => {
+      // Force show prompt even if previously dismissed
+      setHasDismissed(false);
+      setShowPrompt(true);
+    };
     window.addEventListener("trigger-install-prompt", handleTrigger);
 
     return () => {
