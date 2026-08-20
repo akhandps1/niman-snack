@@ -409,9 +409,20 @@ export default function Home() {
             <div className="mt-8 bg-white p-4 rounded-lg text-center border border-orange-200">
               <p className="text-gray-700 font-medium">Example: If you're 5 km away → Only <strong className="text-gray-900">₹20 extra</strong> (₹10 × 2 extra km)</p>
             </div>
-            <p className="text-center text-sm text-gray-500 mt-6 max-w-2xl mx-auto">
-              We deliver to all areas in and around Noida. For specific delivery time estimates to your location, please contact us. <br/>
-              Note: For bulk orders or catering services, please contact us directly for special arrangements.
+
+            <div className="mt-10 bg-white p-6 rounded-xl border border-orange-200 shadow-sm max-w-2xl mx-auto">
+              <h4 className="text-xl font-bold text-gray-900 mb-3 text-center border-b border-orange-100 pb-2">Our Location</h4>
+              <p className="text-gray-700 text-center font-medium leading-relaxed">
+                <span className="text-orange-700 font-bold block mb-1">Niman Snacks Bar & Restro</span>
+                Dream Home 4, Sector 73,<br/>
+                Noida 201304<br/>
+                Uttar Pradesh, India
+              </p>
+            </div>
+
+            <p className="text-center text-sm text-gray-500 mt-8 max-w-2xl mx-auto">
+              We deliver to all areas in and around Noida. For specific delivery time estimates to your location, please contact us. <br/><br/>
+              <strong>Note:</strong> For bulk orders or catering services, please contact us directly for special arrangements.
             </p>
           </div>
         </div>
