@@ -62,7 +62,15 @@ export function InstallPrompt() {
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-    return () => window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    
+    // Allow external triggers (like a button click in the header)
+    const handleTrigger = () => setShowPrompt(true);
+    window.addEventListener("trigger-install-prompt", handleTrigger);
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+      window.removeEventListener("trigger-install-prompt", handleTrigger);
+    };
   }, [isStandalone]);
 
   const handleInstallClick = async () => {

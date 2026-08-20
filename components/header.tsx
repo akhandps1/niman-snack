@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { Menu } from "lucide-react"
+import { Menu, Download } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
@@ -19,6 +19,10 @@ const navItems = [
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false)
+
+  const triggerInstallPrompt = () => {
+    window.dispatchEvent(new Event("trigger-install-prompt"));
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-sm border-b shadow-sm">
@@ -53,6 +57,14 @@ export default function Header() {
             </Link>
           ))}
           <Button
+            onClick={triggerInstallPrompt}
+            variant="outline"
+            className="border-orange-500 text-orange-600 hover:bg-orange-50 transition-transform hover:scale-105 duration-300 gap-2"
+          >
+            <Download className="w-4 h-4" />
+            Install App
+          </Button>
+          <Button
             className="bg-green-600 hover:bg-green-700 text-white transition-transform hover:scale-105 duration-300"
             asChild
           >
@@ -85,7 +97,18 @@ export default function Header() {
                 </Link>
               ))}
               <Button
-                className="mt-4 bg-green-600 hover:bg-green-700 text-white transition-transform hover:scale-105 duration-300"
+                onClick={() => {
+                  triggerInstallPrompt();
+                  setIsOpen(false);
+                }}
+                variant="outline"
+                className="mt-4 border-orange-500 text-orange-600 hover:bg-orange-50 transition-transform hover:scale-105 duration-300 gap-2 justify-start"
+              >
+                <Download className="w-4 h-4" />
+                Install App
+              </Button>
+              <Button
+                className="mt-2 bg-green-600 hover:bg-green-700 text-white transition-transform hover:scale-105 duration-300 justify-start"
                 asChild
               >
                 <Link
