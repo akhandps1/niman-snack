@@ -289,10 +289,16 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-b from-orange-50 via-white to-gray-50 py-10 px-4 sm:px-6 lg:px-8 pb-24 relative overflow-hidden">
+      {/* Decorative background blobs */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-orange-400/10 rounded-full blur-3xl -z-10 pointer-events-none"></div>
+      
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
-      <div className="max-w-3xl mx-auto">
-        <h1 className="text-3xl font-extrabold text-gray-900 mb-8">Checkout</h1>
+      <div className="max-w-3xl mx-auto relative z-10">
+        <div className="text-center mb-10">
+          <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight">Checkout</h1>
+          <p className="text-gray-500 font-medium mt-3">Complete your order securely</p>
+        </div>
 
         <form onSubmit={handleCheckout} className="space-y-6">
           {/* Delivery Details */}
