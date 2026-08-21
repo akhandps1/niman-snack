@@ -3,22 +3,22 @@
 import { useState, useEffect } from "react";
 import Image from "next/image"
 import Link from "next/link"
-import { Instagram, Facebook, Phone, Mail, MapPin, Navigation, Loader2, Lock, Star, Quote, Leaf, Drumstick, Sparkles, Flame, ShieldCheck } from "lucide-react"
+import { Instagram, Facebook, Phone, Mail, MapPin, Navigation, Loader2, Lock, Star, Quote, Leaf, Drumstick, Sparkles, Flame, ShieldCheck, Truck, ArrowRight } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
 import Header from "@/components/header"
-import WhatsAppButton from "@/components/whatsapp-button";
 import GlobalLoader from "@/components/global-loader";
+import { useCart } from "@/lib/cart-context";
 import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 interface HeroData {
   title: string;
-  whatsappNumber: string;
-  whatsappMessage: string;
+  promotionBadge: string;
+  subtitle: string;
   imageUrl: string;
 }
 
@@ -27,11 +27,13 @@ interface FoodItem {
   title: string;
   description: string;
   price: string;
+  originalPrice?: string;
   imageUrl: string;
   badge?: string;
   isActive: boolean;
   category: "Veg" | "Non-Veg";
   isSignature: boolean;
+  stockQuantity: number;
 }
 
 export default function Home() {
@@ -40,10 +42,11 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState<"Veg" | "Non-Veg">("Veg");
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
+  const { addToCart } = useCart();
 
-  // Default hardcoded values as fallback
-  const defaultWhatsappNumber = "+91 88002 18121";
-  const defaultWhatsappMessage = "Hi! I'd like to place an order from Niman Snacks Bar.";
+  // Default fallback values
+  const defaultSubtitle = "Discover the rich, aromatic flavors of authentic Indian comfort food at Niman Snacks Bar & Restro.";
+  const defaultPromotionBadge = "🔥 Free Delivery Above ₹500!";
   const defaultHeroImage = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/03b4a790-cba5-4c1f-b3ee-15b711bbae1b%20%281%29.jpg-idkiDzKGfGh5KPHVNbe3S6F2GNpAjW.jpeg";
   
   useEffect(() => {
@@ -63,8 +66,10 @@ export default function Home() {
           items.push({ 
             id: doc.id, 
             ...data,
+            originalPrice: data.originalPrice || "",
             category: data.category || "Veg",
-            isSignature: data.isSignature || false
+            isSignature: data.isSignature || false,
+            stockQuantity: data.stockQuantity || 0
           } as FoodItem);
         });
         
@@ -85,8 +90,8 @@ export default function Home() {
     setActiveFilter(null);
   }, [activeCategory]);
 
-  const whatsappNumber = heroData?.whatsappNumber || defaultWhatsappNumber;
-  const whatsappMessage = heroData?.whatsappMessage || defaultWhatsappMessage;
+  const promotionBadge = heroData?.promotionBadge || defaultPromotionBadge;
+  const subtitle = heroData?.subtitle || defaultSubtitle;
 
   // Location details for the map
   const address = "Dream Home 4, sector 73, Noida 201304, Uttar Pradesh, India"
@@ -128,6 +133,13 @@ export default function Home() {
     const itemThemeHover = isItemVeg ? 'hover:bg-[#158c42]' : 'hover:bg-[#b81d12]';
     const itemThemeBgLight = isItemVeg ? 'bg-[#f0f9f4]' : 'bg-[#fcebea]';
 
+    const numericPrice = parseFloat(item.price.replace(/[^0-9.]/g, '')) || 0;
+    const numericOriginal = item.originalPrice ? parseFloat(item.originalPrice.replace(/[^0-9.]/g, '')) : 0;
+    let discountPercent = 0;
+    if (numericOriginal > numericPrice && numericPrice > 0) {
+      discountPercent = Math.round(((numericOriginal - numericPrice) / numericOriginal) * 100);
+    }
+
     return (
       <Card key={item.id} className="overflow-hidden border-none shadow-md hover:shadow-xl transition-all duration-300 rounded-xl bg-white flex flex-col h-full">
         {/* Image Area */}
@@ -143,6 +155,14 @@ export default function Home() {
             <span className="w-1.5 h-1.5 bg-white rounded-full mr-1.5"></span>
             {item.category}
           </div>
+          {/* Out of Stock Overlay */}
+          {item.stockQuantity <= 0 && (
+            <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px] flex items-center justify-center z-10">
+              <span className="bg-red-600 text-white font-extrabold px-4 py-2 rounded-lg rotate-12 shadow-lg tracking-widest uppercase border-2 border-red-200">
+                Out of Stock
+              </span>
+            </div>
+          )}
         </div>
         
         {/* Content Area */}
@@ -151,9 +171,19 @@ export default function Home() {
             <h3 className="text-xl font-bold text-gray-900 pr-4">
               {item.title}
             </h3>
-            <span className={`text-xl font-bold ${itemThemeText} shrink-0`}>
-              ₹{item.price.replace(/[^0-9]/g, '')}
-            </span>
+            <div className="flex flex-col items-end shrink-0">
+              <span className={`text-xl font-bold ${itemThemeText}`}>
+                ₹{numericPrice}
+              </span>
+              {discountPercent > 0 && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-400 line-through">₹{numericOriginal}</span>
+                  <span className="text-xs font-bold text-white bg-red-500 px-1.5 py-0.5 rounded">
+                    {discountPercent}% OFF
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
           
           <p className="text-gray-500 text-sm leading-relaxed mb-4 flex-grow">
@@ -173,11 +203,19 @@ export default function Home() {
           
           {/* Footer Button */}
           <div className="mt-auto">
-            <WhatsAppButton
-              number={whatsappNumber}
-              message={`Hi! I'd like to order ${item.title} (₹${item.price.replace(/[^0-9]/g, '')}) from Niman Snacks Bar.`}
-              className={`w-full justify-center ${itemThemeBg} ${itemThemeHover} text-white rounded-md h-10 shadow-sm transition-all text-sm font-medium`}
-            />
+            <Button
+              disabled={item.stockQuantity <= 0}
+              onClick={() => addToCart({
+                id: item.id,
+                title: item.title,
+                price: item.price,
+                quantity: 1,
+                imageUrl: item.imageUrl
+              })}
+              className={`w-full justify-center ${item.stockQuantity <= 0 ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : `${itemThemeBg} ${itemThemeHover} text-white`} rounded-md h-10 shadow-sm transition-all text-sm font-medium`}
+            >
+              {item.stockQuantity <= 0 ? "Out of Stock" : "Add to Cart"}
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -195,32 +233,59 @@ export default function Home() {
       <Header />
 
       {/* Hero Section */}
-      <section className="relative h-[80vh] w-full flex items-center">
+      <section className="relative min-h-[85vh] w-full flex items-center justify-center overflow-hidden bg-slate-900">
+        {/* Background Image with Overlay */}
         <div className="absolute inset-0">
           <Image
             src={heroData?.imageUrl || defaultHeroImage}
             alt="Niman Snacks Bar"
             fill
-            className="object-cover brightness-[0.6]"
+            className="object-cover opacity-50 scale-105 animate-[pulse_20s_ease-in-out_infinite]"
             priority
           />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#111] via-transparent to-[#111]/40 mix-blend-multiply" />
         </div>
-        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center animate-in fade-in zoom-in duration-700">
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold text-white mb-6 drop-shadow-lg tracking-tight">
+
+        {/* Floating Icons (Zomato-esque vibe) */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden hidden md:block">
+          <Flame className="absolute top-1/4 left-[10%] w-12 h-12 text-orange-500/30 animate-bounce delay-100" />
+          <Drumstick className="absolute top-1/3 right-[15%] w-16 h-16 text-orange-400/20 animate-pulse delay-300 rotate-12" />
+          <Leaf className="absolute bottom-1/4 left-[20%] w-10 h-10 text-green-500/30 animate-bounce delay-500 -rotate-12" />
+          <Star className="absolute top-[15%] right-[30%] w-8 h-8 text-yellow-400/40 animate-pulse" />
+        </div>
+
+        {/* Content */}
+        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center animate-in slide-in-from-bottom-10 fade-in duration-1000">
+          
+          {/* Promotion Badge */}
+          <div className="inline-block mb-6 relative group cursor-pointer">
+            <div className="absolute -inset-1 bg-gradient-to-r from-red-500 to-orange-500 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-500 animate-pulse"></div>
+            <div className="relative bg-black text-white px-6 py-2 rounded-full font-extrabold text-sm tracking-wide border border-white/20 flex items-center gap-2">
+              <span className="relative flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-orange-500"></span>
+              </span>
+              {promotionBadge}
+            </div>
+          </div>
+
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-white mb-6 drop-shadow-2xl tracking-tighter leading-tight">
             {heroData?.title || "Flavors That Feel Like Home"}
           </h1>
-          <p className="text-xl md:text-2xl text-orange-50 mb-10 max-w-3xl mx-auto font-medium drop-shadow-md">
-            Discover the rich, aromatic flavors of authentic Indian comfort food at Niman Snacks Bar & Restro. Our Chicken Litti, Chicken Curry, and Samosas bring tradition to your table.
+          
+          <p className="text-xl md:text-2xl text-gray-200 mb-12 max-w-3xl mx-auto font-medium drop-shadow-lg leading-relaxed">
+            {subtitle}
           </p>
+          
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Button size="lg" className="bg-green-600 hover:bg-green-700 text-white text-lg px-8 py-6 rounded-full w-full sm:w-auto transition-transform hover:scale-105 shadow-lg" asChild>
-              <Link href={`https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(whatsappMessage)}`} target="_blank">
-                Order on WhatsApp
+            <Button size="lg" className="bg-[#da291c] hover:bg-[#b81d12] text-white text-xl px-10 py-7 rounded-2xl w-full sm:w-auto transition-all hover:scale-105 shadow-[0_0_40px_-10px_rgba(218,41,28,0.8)] font-bold" asChild>
+              <Link href="#menu">
+                Order Food Online <ArrowRight className="ml-2 w-6 h-6 animate-pulse" />
               </Link>
             </Button>
-            <Button size="lg" variant="outline" className="bg-white/10 hover:bg-white/20 text-white border-white text-lg px-8 py-6 rounded-full w-full sm:w-auto backdrop-blur-sm transition-transform hover:scale-105" asChild>
+            <Button size="lg" variant="outline" className="bg-white/10 hover:bg-white/20 text-white border-white/30 text-lg px-8 py-7 rounded-2xl w-full sm:w-auto backdrop-blur-md transition-transform hover:scale-105 font-bold" asChild>
               <Link href="#location">
-                Find Our Location
+                View Restaurant Info
               </Link>
             </Button>
           </div>
@@ -677,13 +742,13 @@ export default function Home() {
             <h3 className="text-lg font-bold text-white mb-6 uppercase tracking-wider text-sm">Contact Us</h3>
             <ul className="space-y-4">
               <li>
-                <a href={`https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}`} target="_blank" className="flex items-center hover:text-green-400 transition-colors group">
+                <a href={`https://wa.me/918800218121`} target="_blank" className="flex items-center hover:text-green-400 transition-colors group">
                   <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center mr-3 group-hover:bg-green-900/50">
                     <Phone className="w-4 h-4 text-green-500" />
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">WhatsApp / Phone</p>
-                    <p className="text-white group-hover:text-green-400">{whatsappNumber}</p>
+                    <p className="text-white group-hover:text-green-400">+91 88002 18121</p>
                   </div>
                 </a>
               </li>
@@ -713,19 +778,25 @@ export default function Home() {
             <Link href="https://facebook.com" target="_blank" aria-label="Facebook">
               <Facebook className="w-5 h-5 text-gray-500 hover:text-white transition-colors" />
             </Link>
-            <div className="w-px h-4 bg-gray-700"></div>
-            <Link href="/admin/login" className="flex items-center text-xs text-gray-600 hover:text-gray-300 transition-colors">
-              <Lock className="w-3 h-3 mr-1" />
-              Admin
-            </Link>
+            <div className="w-px h-4 bg-gray-700 hidden sm:block"></div>
+            <div className="flex flex-wrap items-center justify-center gap-2 mt-4 sm:mt-0">
+              <Link href="/admin/login">
+                <Button variant="outline" size="sm" className="h-8 text-xs bg-gray-900 border-gray-700 text-gray-400 hover:text-white hover:bg-gray-800 hover:border-gray-600 transition-colors">
+                  <Lock className="w-3 h-3 mr-1.5" />
+                  Admin
+                </Button>
+              </Link>
+              <Link href="/delivery/login">
+                <Button variant="outline" size="sm" className="h-8 text-xs bg-gray-900 border-gray-700 text-gray-400 hover:text-white hover:bg-gray-800 hover:border-gray-600 transition-colors">
+                  <Truck className="w-3 h-3 mr-1.5" />
+                  Delivery
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </footer>
 
-      {/* Fixed WhatsApp Button */}
-      <div className="fixed bottom-6 right-6 z-50 animate-bounce">
-        <WhatsAppButton number={whatsappNumber} message={whatsappMessage} size="lg" className="shadow-2xl rounded-full px-6 py-6" />
-      </div>
     </main>
   )
 }
