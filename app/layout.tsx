@@ -21,6 +21,16 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   icons: {
     icon: "/favicon.ico",
+    apple: "/icon-192x192.png",
+  },
+  appleWebApp: {
+    capable: true,
+    title: "Niman Snacks",
+    statusBarStyle: "black-translucent",
+  },
+  applicationName: "Niman Snacks",
+  formatDetection: {
+    telephone: false,
   },
   generator: 'v0.dev'
 }
@@ -28,6 +38,8 @@ export const metadata: Metadata = {
 import { ScrollProgress } from "@/components/scroll-progress"
 import { InstallPrompt } from "@/components/install-prompt"
 import { ServiceWorkerRegistry } from "@/components/sw-registry"
+import { CartProvider } from "@/lib/cart-context"
+import { BottomNav } from "@/components/bottom-nav"
 
 export default function RootLayout({
   children,
@@ -40,7 +52,10 @@ export default function RootLayout({
         <ServiceWorkerRegistry />
         <ScrollProgress />
         <InstallPrompt />
-        {children}
+        <CartProvider>
+          {children}
+          <BottomNav />
+        </CartProvider>
         <Toaster richColors position="top-right" />
       </body>
     </html>

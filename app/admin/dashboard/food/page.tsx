@@ -23,11 +23,13 @@ interface FoodItem {
   title: string;
   description: string;
   price: string;
+  originalPrice?: string;
   imageUrl: string;
-  badge?: string; // e.g. "Authentic, Traditional, Free Delivery"
+  badge?: string;
   isActive: boolean;
   category: "Veg" | "Non-Veg";
   isSignature: boolean;
+  stockQuantity: number;
 }
 
 export default function FoodManager() {
@@ -40,10 +42,12 @@ export default function FoodManager() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
+  const [originalPrice, setOriginalPrice] = useState("");
   const [badge, setBadge] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [category, setCategory] = useState<"Veg" | "Non-Veg">("Veg");
   const [isSignature, setIsSignature] = useState(false);
+  const [stockQuantity, setStockQuantity] = useState<number>(0);
   const [imageUrl, setImageUrl] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
@@ -57,9 +61,10 @@ export default function FoodManager() {
         items.push({ 
           id: doc.id, 
           ...data,
-          // Handle old documents that might not have these fields
+          originalPrice: data.originalPrice || "",
           category: data.category || "Veg",
-          isSignature: data.isSignature || false
+          isSignature: data.isSignature || false,
+          stockQuantity: data.stockQuantity || 0
         } as FoodItem);
       });
       setFoods(items);
@@ -80,10 +85,12 @@ export default function FoodManager() {
     setTitle("");
     setDescription("");
     setPrice("");
+    setOriginalPrice("");
     setBadge("");
     setIsActive(true);
     setCategory("Veg");
     setIsSignature(false);
+    setStockQuantity(0);
     setImageUrl("");
     setFile(null);
   };
@@ -93,10 +100,12 @@ export default function FoodManager() {
     setTitle(item.title);
     setDescription(item.description);
     setPrice(item.price);
+    setOriginalPrice(item.originalPrice || "");
     setBadge(item.badge || "");
     setIsActive(item.isActive ?? true);
     setCategory(item.category || "Veg");
     setIsSignature(item.isSignature || false);
+    setStockQuantity(item.stockQuantity || 0);
     setImageUrl(item.imageUrl);
     setFile(null);
     setIsModalOpen(true);
@@ -137,10 +146,12 @@ export default function FoodManager() {
         title,
         description,
         price,
+        originalPrice,
         badge,
         isActive,
         category,
         isSignature,
+        stockQuantity,
         imageUrl: finalImageUrl,
       }, { merge: true });
 
@@ -204,14 +215,22 @@ export default function FoodManager() {
                 <Textarea value={description} onChange={(e) => setDescription(e.target.value)} required placeholder="Short description..." className="focus-visible:ring-[#e87a1e] rounded-xl" />
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div className="space-y-2">
-                  <Label className="font-bold text-gray-700">Price Text</Label>
-                  <Input value={price} onChange={(e) => setPrice(e.target.value)} required placeholder="₹25" className="focus-visible:ring-[#e87a1e] rounded-xl" />
+                  <Label className="font-bold text-gray-700">Current Price</Label>
+                  <Input value={price} onChange={(e) => setPrice(e.target.value)} required placeholder="₹560" className="focus-visible:ring-[#e87a1e] rounded-xl" />
                 </div>
                 <div className="space-y-2">
-                  <Label className="font-bold text-gray-700">Badges (Comma separated)</Label>
-                  <Input value={badge} onChange={(e) => setBadge(e.target.value)} placeholder="Authentic, Popular, Free Delivery" className="focus-visible:ring-[#e87a1e] rounded-xl" />
+                  <Label className="font-bold text-gray-700">Original Price</Label>
+                  <Input value={originalPrice} onChange={(e) => setOriginalPrice(e.target.value)} placeholder="₹600 (Optional)" className="focus-visible:ring-[#e87a1e] rounded-xl" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="font-bold text-gray-700">Badges</Label>
+                  <Input value={badge} onChange={(e) => setBadge(e.target.value)} placeholder="Authentic, Free Delivery" className="focus-visible:ring-[#e87a1e] rounded-xl" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="font-bold text-gray-700">Stock Quantity</Label>
+                  <Input type="number" min="0" value={stockQuantity} onChange={(e) => setStockQuantity(parseInt(e.target.value) || 0)} required placeholder="e.g. 50" className="focus-visible:ring-[#e87a1e] rounded-xl" />
                 </div>
               </div>
 
@@ -265,6 +284,13 @@ export default function FoodManager() {
             const itemThemeHover = isItemVeg ? 'hover:bg-[#158c42]' : 'hover:bg-[#b81d12]';
             const itemThemeBgLight = isItemVeg ? 'bg-[#f0f9f4]' : 'bg-[#fcebea]';
 
+            const numericPrice = parseFloat(item.price.replace(/[^0-9.]/g, '')) || 0;
+            const numericOriginal = item.originalPrice ? parseFloat(item.originalPrice.replace(/[^0-9.]/g, '')) : 0;
+            let discountPercent = 0;
+            if (numericOriginal > numericPrice && numericPrice > 0) {
+              discountPercent = Math.round(((numericOriginal - numericPrice) / numericOriginal) * 100);
+            }
+
             return (
               <Card key={item.id} className={`overflow-hidden border-none shadow-md transition-all duration-300 rounded-xl bg-white flex flex-col h-full relative ${!item.isActive ? 'opacity-60 grayscale' : ''}`}>
                 {!item.isActive && (
@@ -294,32 +320,41 @@ export default function FoodManager() {
                     <h3 className="text-xl font-bold text-gray-900 pr-4">
                       {item.title}
                     </h3>
-                    <span className={`text-xl font-bold ${itemThemeText} shrink-0`}>
-                      ₹{item.price.replace(/[^0-9]/g, '')}
-                    </span>
+                    <div className="flex flex-col items-end shrink-0">
+                      <span className={`text-xl font-bold ${itemThemeText}`}>
+                        ₹{numericPrice}
+                      </span>
+                      {discountPercent > 0 && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-gray-400 line-through">₹{numericOriginal}</span>
+                          <span className="text-xs font-bold text-white bg-red-500 px-1.5 py-0.5 rounded">
+                            {discountPercent}% OFF
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   
                   <p className="text-gray-500 text-sm leading-relaxed mb-4 flex-grow line-clamp-2">
                     {item.description}
                   </p>
 
-                  {/* Badges Row */}
-                  {item.badge && (
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {item.badge.split(',').map((b, i) => (
-                        <span key={i} className={`px-2 py-0.5 ${itemThemeBgLight} ${itemThemeText} text-[10px] font-bold uppercase tracking-wider rounded-md`}>
-                          {b.trim()}
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                  {/* Badges and Stock Row */}
+                  <div className="flex flex-wrap gap-2 mb-4 items-center">
+                    {item.badge && item.badge.split(',').map((b, i) => (
+                      <span key={i} className={`px-2 py-0.5 ${itemThemeBgLight} ${itemThemeText} text-[10px] font-bold uppercase tracking-wider rounded-md`}>
+                        {b.trim()}
+                      </span>
+                    ))}
+                    <span className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-md border ${item.stockQuantity > 0 ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-red-50 text-red-600 border-red-200'}`}>
+                      Stock: {item.stockQuantity || 0}
+                    </span>
+                  </div>
                   
                   <div className="mt-auto">
-                    <WhatsAppButton 
-                      number="+918800218121" 
-                      message={`Hi! I'd like to order ${item.title} from Niman Snacks Bar.`} 
-                      className={`w-full justify-center ${itemThemeBg} ${itemThemeHover} text-white rounded-md h-10 shadow-sm transition-all text-sm font-medium`}
-                    />
+                    <Button disabled className={`w-full justify-center ${itemThemeBg} opacity-80 text-white rounded-md h-10 shadow-sm transition-all text-sm font-medium`}>
+                      Add to Cart (Preview)
+                    </Button>
                   </div>
 
                   {/* Admin Actions */}

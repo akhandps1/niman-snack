@@ -2,18 +2,16 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, Home, Utensils, Menu as MenuIcon, ExternalLink } from "lucide-react";
+import { LogOut, Home, Utensils, ExternalLink, Users, Tag, ClipboardList } from "lucide-react";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useState } from "react";
 import { toast } from "sonner";
+import AuthGuard from "@/components/auth-guard";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -26,8 +24,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   };
 
   const navItems = [
-    { label: "Hero Section", href: "/admin/dashboard", icon: Home },
+    { label: "Orders", href: "/admin/dashboard", icon: ClipboardList },
+    { label: "Hero Section", href: "/admin/dashboard/hero", icon: Home },
     { label: "Food Menu", href: "/admin/dashboard/food", icon: Utensils },
+    { label: "Coupons", href: "/admin/dashboard/coupons", icon: Tag },
+    { label: "Staff", href: "/admin/dashboard/staff", icon: Users },
   ];
 
   const SidebarContent = () => (
@@ -44,7 +45,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <Link
               key={item.href}
               href={item.href}
-              onClick={() => setIsMobileMenuOpen(false)}
               className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-300 ${
                 isActive 
                   ? "bg-[#e87a1e] text-white shadow-md font-bold" 
@@ -58,7 +58,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         })}
       </nav>
       <div className="p-4 border-t border-gray-100 space-y-3 bg-white">
-        <Link href="/" target="_blank" onClick={() => setIsMobileMenuOpen(false)}>
+        <Link href="/" target="_blank">
           <Button
             variant="outline"
             className="w-full justify-start text-[#1ba54f] border-[#1ba54f] bg-[#f0f9f4] hover:bg-[#1ba54f] hover:text-white rounded-xl h-11 transition-all duration-300 shadow-sm mb-2"
@@ -80,21 +80,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   );
 
   return (
-    <div className="min-h-screen bg-[#faf9f5] flex flex-col md:flex-row font-sans">
+    <AuthGuard>
+      <div className="min-h-screen bg-[#faf9f5] flex flex-col md:flex-row font-sans">
       
       {/* Mobile Top Header */}
       <div className="md:hidden flex items-center justify-between bg-white border-b border-gray-100 p-4 sticky top-0 z-20 shadow-sm">
         <h2 className="text-xl font-extrabold text-[#e87a1e]">Admin Panel</h2>
-        <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="text-gray-600 hover:text-[#e87a1e]">
-              <MenuIcon className="w-6 h-6" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="w-[280px] p-0 flex flex-col bg-white">
-            <SidebarContent />
-          </SheetContent>
-        </Sheet>
+        <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600 hover:bg-red-50" onClick={handleLogout}>
+          <LogOut className="w-5 h-5" />
+        </Button>
       </div>
 
       {/* Desktop Sidebar */}
@@ -103,11 +97,32 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-4 sm:p-6 md:p-10 overflow-y-auto">
+      <main className="flex-1 p-4 sm:p-6 md:p-10 pb-24 md:pb-10 overflow-y-auto">
         <div className="max-w-6xl mx-auto">
           {children}
         </div>
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 py-2 pb-safe z-50 shadow-[0_-4px_24px_rgba(0,0,0,0.04)] flex justify-between items-center overflow-x-auto gap-2">
+        {navItems.map((item) => {
+          const isActive = pathname === item.href;
+          const Icon = item.icon;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="flex flex-col items-center justify-center space-y-1 min-w-[56px] flex-1"
+            >
+              <div className={`p-2 rounded-xl transition-all ${isActive ? 'bg-[#fdf3eb] text-[#e87a1e]' : 'text-gray-400 hover:text-[#e87a1e]'}`}>
+                <Icon className="w-5 h-5" />
+              </div>
+              <span className={`text-[10px] font-medium whitespace-nowrap ${isActive ? 'text-[#e87a1e]' : 'text-gray-500'}`}>{item.label.split(" ")[0]}</span>
+            </Link>
+          );
+        })}
+      </div>
     </div>
+    </AuthGuard>
   );
 }

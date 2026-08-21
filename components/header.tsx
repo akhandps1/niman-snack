@@ -3,10 +3,17 @@
 import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { Menu, Download } from "lucide-react"
+import { Menu, Download, UserIcon, LogOut } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { useEffect } from "react"
+import { onAuthStateChanged, User, signOut } from "firebase/auth"
+import { auth } from "@/lib/firebase"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
+import CartDrawer from "./cart-drawer"
 
 const navItems = [
   { name: "Home", href: "/" },
@@ -19,6 +26,25 @@ const navItems = [
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false)
+  const [user, setUser] = useState<User | null>(null)
+  const router = useRouter()
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser)
+    })
+    return () => unsubscribe()
+  }, [])
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth)
+      toast.success("Logged out successfully")
+      router.push("/")
+    } catch (error) {
+      toast.error("Failed to log out")
+    }
+  }
 
   const triggerInstallPrompt = () => {
     window.dispatchEvent(new Event("trigger-install-prompt"));
@@ -64,6 +90,41 @@ export default function Header() {
             <Download className="w-4 h-4" />
             Install App
           </Button>
+
+          <CartDrawer />
+
+          {user ? (
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-medium text-gray-700 truncate max-w-[120px]">
+                Hi, {user.displayName || user.email?.split('@')[0]}
+              </span>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="rounded-full w-8 h-8 bg-orange-100 text-orange-700 hover:bg-orange-200">
+                    <UserIcon className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={() => router.push("/orders")}>
+                    My Orders
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="text-red-600 font-medium">
+                    <LogOut className="w-4 h-4 mr-2" /> Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          ) : (
+            <Button
+              className="bg-orange-600 hover:bg-orange-700 text-white transition-transform hover:scale-105 duration-300"
+              asChild
+            >
+              <Link href="/login">Sign In</Link>
+            </Button>
+          )}
+
           <Button
             className="bg-green-600 hover:bg-green-700 text-white transition-transform hover:scale-105 duration-300"
             asChild
@@ -107,6 +168,33 @@ export default function Header() {
                 <Download className="w-4 h-4" />
                 Install App
               </Button>
+              
+              {user ? (
+                <>
+                  <div className="px-2 py-2 text-sm text-gray-500 truncate">
+                    Signed in as {user.displayName || user.email}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    className="justify-start text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                    onClick={() => {
+                      handleLogout();
+                      setIsOpen(false);
+                    }}
+                  >
+                    Logout
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  className="mt-2 bg-orange-600 hover:bg-orange-700 text-white justify-start"
+                  asChild
+                  onClick={() => setIsOpen(false)}
+                >
+                  <Link href="/login">Sign In</Link>
+                </Button>
+              )}
+
               <Button
                 className="mt-2 bg-green-600 hover:bg-green-700 text-white transition-transform hover:scale-105 duration-300 justify-start"
                 asChild
